@@ -33,7 +33,11 @@ public class ReignitedHudConfig {
 
     // -- Methods --
 
+    /**
+     * Registers the configuration for the client.
+     **/
     public static void register() {
+        // Registering the client configuration
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SPEC, ReignitedHud.MODID + "-client.toml");
     } // register ()
 
