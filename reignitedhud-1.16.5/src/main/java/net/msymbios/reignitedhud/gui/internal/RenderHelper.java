@@ -23,11 +23,15 @@ public class RenderHelper {
         BufferBuilder bufferbuilder = tessellator.getBuilder();
         float f = 1.0F / textureWidth;
         float f1 = 1.0F / textureHeight;
+
+        GlStateManager._enableBlend(); // Enable blending for transparency
+        GlStateManager._blendFunc(GlStateManager.SourceFactor.SRC_ALPHA.value, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA.value); // Set blend function
+
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.vertex((double)(x + 0), (double)(y + height), -1000.0).uv((float)(u * f), (float)((v + (float)height) * f1)).endVertex();
-        bufferbuilder.vertex((double)(x + width), (double)(y + height), -1000.0).uv((float)((u + (float)width) * f), (float)((v + (float)height) * f1)).endVertex();
-        bufferbuilder.vertex((double)(x + width), (double)(y + 0), -1000.0).uv((float)((u + (float)width) * f), (float)(v * f1)).endVertex();
-        bufferbuilder.vertex((double)(x + 0), (double)(y + 0), -1000.0).uv((float)(u * f), (float)(v * f1)).endVertex();
+        bufferbuilder.vertex(x, y + height, -1000.0).uv(u * f, (v + (float)height) * f1).endVertex();
+        bufferbuilder.vertex(x + width, y + height, -1000.0).uv((u + (float)width) * f, (v + (float)height) * f1).endVertex();
+        bufferbuilder.vertex((x + width), (y), -1000.0).uv((u + (float)width) * f, v * f1).endVertex();
+        bufferbuilder.vertex((x), (y), -1000.0).uv(u * f, v * f1).endVertex();
         tessellator.end();
     } // drawCustomSizedTexture ()
 
@@ -186,8 +190,7 @@ public class RenderHelper {
 
     // =========================================================
 
-
-    /*public static void drawEntityStats(LivingEntity entity, String text, float var, double x, double y, double z, float playerYaw, float playerPitch) {
+    public static void drawEntityStats(LivingEntity entity, String text, float var, double x, double y, double z, float playerYaw, float playerPitch) {
         Minecraft minecraft = Minecraft.getInstance();
         float height1 = 0.0F;
         float height2 = 5.0F;
@@ -219,16 +222,15 @@ public class RenderHelper {
         BufferBuilder bufferbuilder = tessellator.getBuilder();
         minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BAR);
         GlStateManager._blendColor(1.0F, 1.0F, 1.0F, 1.0F);
-
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.vertex((double)(-width / 2.0F), 5.0, 0.02).uv((float) (u * f), (float)(height1 * f)).endVertex();
-        bufferbuilder.vertex((double)(width / 2.0F), 5.0, 0.02).uv((float)((u + 121.0F) * f), (float)(height1 * f)).endVertex();
-        bufferbuilder.vertex((double)(width / 2.0F), 0.0, 0.02).uv((float)((u + 121.0F) * f), (float)(height2 * f)).endVertex();
-        bufferbuilder.vertex((double)(-width / 2.0F), 0.0, 0.02).uv((float)(u * f), (float)(height2 * f)).endVertex();
-        bufferbuilder.vertex((double)(-width / 2.0F + 1.0F), 4.0, 0.01).uv((float)(u2 * f), (float)(height3 * f)).endVertex();
-        bufferbuilder.vertex((double)(-width / 2.0F + 1.0F + var1), 4.0, 0.01).uv((float)((u2 + var1) * f), (float)(height3 * f)).endVertex();
-        bufferbuilder.vertex((double)(-width / 2.0F + 1.0F + var1), 1.0, 0.01).uv((float)((u2 + var1) * f), (float)(height4 * f)).endVertex();
-        bufferbuilder.vertex((double)(-width / 2.0F + 1.0F), 1.0, 0.01).uv((float)(u2 * f), (float)(height4 * f)).endVertex();
+        bufferbuilder.vertex(-width / 2.0F, 5.0, 0.02).uv(u * f, height1 * f).endVertex();
+        bufferbuilder.vertex(width / 2.0F, 5.0, 0.02).uv((u + 121.0F) * f, height1 * f).endVertex();
+        bufferbuilder.vertex(width / 2.0F, 0.0, 0.02).uv((u + 121.0F) * f, height2 * f).endVertex();
+        bufferbuilder.vertex(-width / 2.0F, 0.0, 0.02).uv(u * f, height2 * f).endVertex();
+        bufferbuilder.vertex(-width / 2.0F + 1.0F, 4.0, 0.01).uv(u2 * f, height3 * f).endVertex();
+        bufferbuilder.vertex(-width / 2.0F + 1.0F + var1, 4.0, 0.01).uv((u2 + var1) * f, height3 * f).endVertex();
+        bufferbuilder.vertex(-width / 2.0F + 1.0F + var1, 1.0, 0.01).uv((u2 + var1) * f, height4 * f).endVertex();
+        bufferbuilder.vertex(-width / 2.0F + 1.0F, 1.0, 0.01).uv(u2 * f, height4 * f).endVertex();
         tessellator.end();
 
         drawFontWithShadow(new MatrixStack(), text, -(getStringWidth(text) / 2), -5, 16777215);

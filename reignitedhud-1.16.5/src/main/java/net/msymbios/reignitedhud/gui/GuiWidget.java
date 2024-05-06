@@ -8,9 +8,14 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.IJumpingMount;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.monster.WitchEntity;
 import net.minecraft.entity.passive.horse.HorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -20,9 +25,13 @@ import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.GameRules;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.msymbios.reignitedhud.config.ReignitedHudConfig;
 import net.msymbios.reignitedhud.config.ReignitedHudID;
 import net.msymbios.reignitedhud.gui.internal.RenderHelper;
 import org.lwjgl.opengl.GL11;
@@ -43,6 +52,48 @@ public class GuiWidget {
 
     // -- Methods --
 
+    /*@SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void renderEntityStats(RenderLivingEvent.Pre<LivingEntity, EntityModel<LivingEntity>> event) {
+        ClientPlayerEntity player = this.minecraft.player;
+        EntityRendererManager render = event.getRenderer().getDispatcher();
+        FontRenderer font = render.getFont();
+        LivingEntity entityBase = event.getEntity();
+        double distance = (double)entityBase.distanceTo(render.camera.getEntity());
+        if (/*ReignitedHudConfig.cfgTarget && entityBase instanceof LivingEntity && !(entityBase instanceof ClientPlayerEntity) && !entityBase.isAlive() && /*distance < 20.0 && entityBase != player.getVehicle()) {
+            LivingEntity entity = (LivingEntity)entityBase;
+            float curHealth = entity.getHealth();
+            float maxHealth = entity.getMaxHealth();
+            float health = 1.0F;
+            if (curHealth / maxHealth < 1.0F) {
+                health = curHealth / maxHealth;
+            }
+
+            String entityStat = entity.getDisplayName().getString();
+            Entity viewingEntity = render.camera.getEntity();
+            float playerYaw = render.camera.getYRot();
+            float playerPitch = render.camera.getXRot();
+
+            if (this.minecraft.player.isCrouching())
+                playerPitch = -playerPitch;
+
+            double entityX = entity.position().x * (double)event.getPartialRenderTick();
+            double entityY = entity.position().y * (double)event.getPartialRenderTick();
+            double entityZ = entity.position().z * (double)event.getPartialRenderTick();
+            double viewingX = viewingEntity.position().x * (double)event.getPartialRenderTick();
+            double viewingY = viewingEntity.position().y * (double)event.getPartialRenderTick();
+            double viewingZ = viewingEntity.position().z * (double)event.getPartialRenderTick();
+            double x = entityX - viewingX;
+            double y = entityY - viewingY + (double)entity.getEyeHeight() + 0.4;
+            if (entity instanceof WitchEntity) y += 0.4;
+
+            double z = entityZ - viewingZ;
+            if (!entity.isInvisible()) {
+                RenderHelper.drawEntityStats(entity, entityStat, health, x, y, z, playerYaw, playerPitch);
+            }
+        }
+
+    } // renderEntityStats ()*/
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void renderOverlay(RenderGameOverlayEvent.Pre event) {
         RenderGameOverlayEvent.ElementType type = event.getType();
@@ -58,17 +109,14 @@ public class GuiWidget {
             this.getWidgetBase(player);
             this.getPlayerHealthBar(player);
             this.getPlayerAirBar(player, scaled);
-            this.getMountInfo(player);
             this.getFoodValue(player);
             this.getSatuValue(player);
             this.getArmorValue(player);
 
-            //if (Config.cfgDurabilities) this.getDurabilities(player);
-            this.getDurabilities(player);
-
-            this.getEffects(player, scaled);
-            //if (Config.cfgTime) this.getClock(player, scaled);
-            this.getClock(scaled);
+            if (ReignitedHudConfig.DURABILITY.get()) this.getDurabilities(player);
+            if (ReignitedHudConfig.MOUNT.get()) this.getMountInfo(player);
+            if (ReignitedHudConfig.EFFECT.get()) this.getEffects(player, scaled);
+            if (ReignitedHudConfig.TIME.get()) this.getClock(scaled);
 
             GL11.glPopMatrix();
         }
@@ -80,7 +128,7 @@ public class GuiWidget {
         ResourceLocation playerskin = DefaultPlayerSkin.getDefaultSkin();
         if (!profile.equals((Object)null)) {
             Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> map = this.minecraft.getSkinManager().getInsecureSkinInformation(profile);
-           if (map.containsKey(MinecraftProfileTexture.Type.SKIN)) playerskin = this.minecraft.getSkinManager().registerTexture((MinecraftProfileTexture)map.get(MinecraftProfileTexture.Type.SKIN), MinecraftProfileTexture.Type.SKIN);
+           if (map.containsKey(MinecraftProfileTexture.Type.SKIN)) playerskin = this.minecraft.getSkinManager().registerTexture(map.get(MinecraftProfileTexture.Type.SKIN), MinecraftProfileTexture.Type.SKIN);
            else playerskin = DefaultPlayerSkin.getDefaultSkin(PlayerEntity.createPlayerUUID(profile));
         }
 
@@ -90,14 +138,14 @@ public class GuiWidget {
         this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BASE);
         this.minecraft.gui.blit(new MatrixStack(), 15, 11, 0, 0, 29, 29);
         RenderHelper.drawFontWithShadow(new MatrixStack(), player.getName().getString(), 48, 13, 16777215);
-        this.minecraft.getTextureManager().bind(playerskin);
+        this.minecraft.textureManager.bind(playerskin);
         RenderHelper.drawPlayerIcon(21, 17, 17);
 
         String enchantedPoints = String.valueOf(player.experienceLevel);
         RenderHelper.drawFontBoldCentered(new MatrixStack(), enchantedPoints, 30, 35, 13172623, 2957570);
 
         if(this.minecraft.level != null) {
-            if (this.minecraft.level.isClientSide) {
+            if (this.minecraft.level.getDifficulty() == Difficulty.HARD) {
                 this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
                 RenderHelper.drawIcon(new MatrixStack(),25, 11, 4, 2);
             }
