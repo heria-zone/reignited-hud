@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/heria-zone/wallpaper-craft/issues">Issues</a>    ·
+    <a href="https://github.com/heria-zone/reignited-hud/issues">Issues</a>    ·
     <a href="#">Wiki (Coming...)</a>
 </p>
 
