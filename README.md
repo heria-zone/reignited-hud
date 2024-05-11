@@ -8,6 +8,9 @@
     <a href="https://www.curseforge.com/minecraft/mc-mods/reignited-hud">
         <img alt="CurseForge Downloads" src="https://img.shields.io/curseforge/dt/1014664?logo=CurseForge">
     </a>
+    <a href="https://modrinth.com/mod/reboot-lovelyrobot">
+        <img alt="Modrinth Downloads" src="https://img.shields.io/modrinth/dt/z8BTj1V5?logo=Modrinth">
+    </a>
     <a href="https://discord.gg/KdZZMj89bU">
         <img alt="Discord" src="https://img.shields.io/discord/1156134479149158402?logo=Discord">
     </a>
