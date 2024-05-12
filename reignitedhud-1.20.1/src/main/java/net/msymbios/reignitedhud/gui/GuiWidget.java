@@ -79,18 +79,20 @@ public class GuiWidget {
             GuiGraphics graphics = event.getGuiGraphics();
 
             // Render different parts of the HUD
-            this.getWidgetBase(player, graphics);
-            this.getPlayerHealthBar(player, graphics);
-            this.getPlayerAirBar(player, scaled, graphics);
-            this.getFoodValue(player, graphics);
-            this.getSatuValue(player, graphics);
-            this.getArmorValue(player, graphics);
+            if (ReignitedHudConfig.PLAYER_SKIN.get()) this.getWidgetBase(player, graphics);
+            if (ReignitedHudConfig.PLAYER_USERNAME.get()) this.getPlayerName(player, graphics);
+            if (ReignitedHudConfig.PLAYER_HEALTH.get()) this.getPlayerHealthBar(player, graphics);
+            if (ReignitedHudConfig.PLAYER_ARMOR.get()) this.getArmorValue(player, graphics);
+            if (ReignitedHudConfig.PLAYER_AIR_SUPPLY.get()) this.getPlayerAirBar(player, scaled, graphics);
+
+            if (ReignitedHudConfig.FOOD_LEVEL.get()) this.getFoodValue(player, graphics);
+            if (ReignitedHudConfig.FOOD_SATURATION.get()) this.getSatuValue(player, graphics);
 
             // Conditionally render additional HUD elements based on configuration
-            if (ReignitedHudConfig.DURABILITY.get()) this.getDurability(player, graphics);
+            this.getDurability(player, graphics);
             if (ReignitedHudConfig.MOUNT.get()) this.getMountInfo(player, graphics);
             if (ReignitedHudConfig.EFFECT.get()) this.getEffects(player, scaled, graphics);
-            if (ReignitedHudConfig.TIME.get()) this.getClock(scaled, graphics);
+            if (ReignitedHudConfig.CLOCK_TIME.get()) this.getClock(scaled, graphics);
         }
 
     } // renderOverlay ()
@@ -133,7 +135,7 @@ public class GuiWidget {
         graphics.blit(ReignitedHudID.TEX_HUD_BASE, 15, 11, 0, 0, 29, 29);
 
         // Render player's name on the HUD
-        RenderDrawCallback.drawFontWithShadow(graphics, player.getName().getString(), 48, 13, 16777215);
+        //RenderDrawCallback.drawFontWithShadow(graphics, player.getName().getString(), 48, 13, 16777215);
 
         // Bind player's skin texture and render player icon on HUD
         RenderSystem.setShaderTexture(0, playerSkin);
@@ -154,6 +156,31 @@ public class GuiWidget {
     } // getWidgetBase ()
 
     /**
+     * Renders the player's name on the Heads-Up Display (HUD).
+     *
+     * @param player The player entity whose name will be rendered
+     * @param graphics The GUI graphics object for rendering
+     */
+    public void getPlayerName(LocalPlayer player, GuiGraphics graphics) {
+        // Get the player's name as a string
+        String playerName = player.getName().getString();
+
+        // Set the position for rendering the player's name
+        int posX = 48;
+        int posY = 13;
+
+        if(!ReignitedHudConfig.PLAYER_SKIN.get()) {
+            posX = 5;
+        }
+
+        // Set the color for rendering the player's name
+        int color = 16777215;
+
+        // Render the player's name on the HUD with a shadow
+        RenderDrawCallback.drawFontWithShadow(graphics, playerName, posX, posY, color);
+    } // getPlayerName ()
+
+    /**
      * Updates and renders the player's health bar based on their current health and effects.
      *
      * @param player The client player entity to retrieve health and effects from
@@ -162,15 +189,23 @@ public class GuiWidget {
         // Calculate the fill amount of current health to max health
         float fill = Math.min(1.0F, player.getHealth() / player.getMaxHealth());
 
+        // Set the position for rendering
+        int posX = 48;
+        int posY = 24;
+
+        if(!ReignitedHudConfig.PLAYER_SKIN.get()) {
+            posX = 5;
+        }
+
         // Determine the type of health bar based on player effects
         int bar = 1;
         if (player.hasEffect(MobEffects.ABSORPTION)) bar = 2;
-        if (player.hasEffect(MobEffects.REGENERATION)) bar = 3;
-        if (player.hasEffect(MobEffects.DAMAGE_BOOST)) bar = 4;
+        if (player.hasEffect(MobEffects.HUNGER)) bar = 3;
+        if (player.hasEffect(MobEffects.WITHER)) bar = 4;
 
         // Bind the health bar texture and render the bar
         RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_BAR);
-        RenderDrawCallback.drawMediumBar(ReignitedHudID.TEX_HUD_BAR, graphics, 48, 24, bar, fill);
+        RenderDrawCallback.drawMediumBar(ReignitedHudID.TEX_HUD_BAR, graphics, posX, posY, bar, fill);
     } // getPlayerHealthBar ()
 
     /**
@@ -267,11 +302,23 @@ public class GuiWidget {
         // Determine the icon to display based on player's hunger effect
         int icon = player.hasEffect(MobEffects.HUNGER) ? 2 : 1;
 
+        // Set the position for rendering
+        int iconPosX = 47;
+        int iconPosY = 31;
+
+        int valuePosX = 59;
+        int valuePosY = 32;
+
+        if(!ReignitedHudConfig.PLAYER_SKIN.get()) {
+            iconPosX = 4;
+            valuePosX = 16;
+        }
+
         // Bind the food icon texture
         RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_ICON);
 
         // Draw the food icon on the HUD
-        RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics,47, 31, 1, icon);
+        RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics,iconPosX, iconPosY, 1, icon);
 
         // Set default color and shadow for the food value display
         int color = 11960912;
@@ -284,7 +331,7 @@ public class GuiWidget {
         }
 
         // Draw the food value on the HUD with appropriate color and shadow
-        RenderDrawCallback.drawFontWithShadow(graphics, hunger, 59, 32, color, shadow);
+        RenderDrawCallback.drawFontWithShadow(graphics, hunger, valuePosX, valuePosY, color, shadow);
     } // getFoodValue ()
 
     /**
@@ -300,7 +347,9 @@ public class GuiWidget {
         String saturation = String.valueOf((int)player.getFoodData().getSaturationLevel());
 
         // Calculate positions for HUD elements
-        int posXIcon = 59 + RenderDrawCallback.getStringWidth(hunger) + 5;
+        int posXIcon = !ReignitedHudConfig.PLAYER_SKIN.get() ? 16 : 59;
+        posXIcon = posXIcon + RenderDrawCallback.getStringWidth(hunger) + 5;
+
         int posXtext = posXIcon + 8 + 4;
         RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_ICON);
 
@@ -308,7 +357,7 @@ public class GuiWidget {
         int icon = player.hasEffect(MobEffects.HUNGER) ? 3 : 4;
 
         // Draw hunger icon
-        RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics,posXIcon, 31, 1, icon);
+        RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics, posXIcon, 31, 1, icon);
 
         // Set colors for text and shadow
         int color = 14533185;
@@ -351,7 +400,9 @@ public class GuiWidget {
         String saturation = String.valueOf((int) player.getFoodData().getSaturationLevel());
 
         // Calculate positions for HUD elements
-        int posXicon = 59 + RenderDrawCallback.getStringWidth(hunger) + 5 + 8 + 4 + RenderDrawCallback.getStringWidth(saturation) + 5;
+        //int posXicon = 59 + RenderDrawCallback.getStringWidth(hunger) + 5 + 8 + 4 + RenderDrawCallback.getStringWidth(saturation) + 5;
+        int posXicon = !ReignitedHudConfig.PLAYER_SKIN.get() ? 16 : 59;
+        posXicon = posXicon + RenderDrawCallback.getStringWidth(hunger) + 5 + 8 + 4 + RenderDrawCallback.getStringWidth(saturation) + 5;
         int posXtext = posXicon + 8 + 4;
 
         // Draw armor icon and value if player has armor
@@ -369,7 +420,7 @@ public class GuiWidget {
             }
 
             RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_ICON);
-            RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics,posXicon, 31, 1, 9);
+            RenderDrawCallback.drawIcon(ReignitedHudID.TEX_HUD_ICON, graphics, posXicon, 31, 1, 9);
             RenderDrawCallback.drawFontWithShadow(graphics, toughness + "", posXtext, 32, 12106180, 1579034);
         }
 
@@ -382,39 +433,45 @@ public class GuiWidget {
      * @param player The client player entity to retrieve equipped items from
      */
     private void getDurability(LocalPlayer player, GuiGraphics graphics) {
-        // Retrieve equipped items
-        ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
-        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        ItemStack legs = player.getItemBySlot(EquipmentSlot.LEGS);
-        ItemStack feet = player.getItemBySlot(EquipmentSlot.FEET);
-        ItemStack mainHandItem = player.getMainHandItem();
-        ItemStack offhandItem = player.getOffhandItem();
-
         // Initialize position for rendering
         int pos = 0;
 
-        // Display durability for the head item
-        RenderDrawCallback.addDurabilityDisplay(graphics, head, pos);
-        if (head.getItem() != Items.AIR) pos += 25;
+        if (ReignitedHudConfig.ITEM_EQUIPMENT.get()) {
+            // Retrieve equipped items
+            ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+            ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+            ItemStack legs = player.getItemBySlot(EquipmentSlot.LEGS);
+            ItemStack feet = player.getItemBySlot(EquipmentSlot.FEET);
 
-        // Display durability for the chest item
-        RenderDrawCallback.addDurabilityDisplay(graphics, chest, pos);
-        if (chest.getItem() != Items.AIR) pos += 25;
+            // Display durability for the head item
+            RenderDrawCallback.addDurabilityDisplay(graphics, head, pos);
+            if (head.getItem() != Items.AIR) pos += 25;
 
-        // Display durability for the legs item
-        RenderDrawCallback.addDurabilityDisplay(graphics, legs, pos);
-        if (legs.getItem() != Items.AIR) pos += 25;
+            // Display durability for the chest item
+            RenderDrawCallback.addDurabilityDisplay(graphics, chest, pos);
+            if (chest.getItem() != Items.AIR) pos += 25;
 
-        // Display durability for the feet item
-        RenderDrawCallback.addDurabilityDisplay(graphics, feet, pos);
-        if (feet.getItem() != Items.AIR) pos += 25;
+            // Display durability for the legs item
+            RenderDrawCallback.addDurabilityDisplay(graphics, legs, pos);
+            if (legs.getItem() != Items.AIR) pos += 25;
 
-        // Display durability for the main hand item
-        RenderDrawCallback.addDurabilityDisplay(graphics, mainHandItem, pos);
-        if (mainHandItem.getItem() != Items.AIR) pos += 25;
+            // Display durability for the feet item
+            RenderDrawCallback.addDurabilityDisplay(graphics, feet, pos);
+            if (feet.getItem() != Items.AIR) pos += 25;
+        }
 
-        // Display durability for the offhand item
-        RenderDrawCallback.addDurabilityDisplay(graphics, offhandItem, pos);
+        if (ReignitedHudConfig.ITEM_EQUIPMENT.get()) {
+            ItemStack mainHandItem = player.getMainHandItem();
+            ItemStack offhandItem = player.getOffhandItem();
+
+            // Display durability for the main hand item
+            RenderDrawCallback.addDurabilityDisplay(graphics, mainHandItem, pos);
+            if (mainHandItem.getItem() != Items.AIR) pos += 25;
+
+            // Display durability for the offhand item
+            RenderDrawCallback.addDurabilityDisplay(graphics, offhandItem, pos);
+        }
+
     } // getDurability ()
 
     /**
@@ -473,7 +530,7 @@ public class GuiWidget {
                     graphics.blit(ReignitedHudID.TEX_HUD_BASE, posX, posY, 88, 0, 29, 21);
                     GlStateManager._clearColor(1.0F, 1.0F, 1.0F, transparency);
                     RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_EFFECT);
-                    graphics.blit(ReignitedHudID.TEX_HUD_BASE, posX + 6, posY - 3, icon % 14 * 18, icon / 14 * 18, 18, 18);
+                    graphics.blit(ReignitedHudID.TEX_HUD_EFFECT, posX + 6, posY - 3, icon % 14 * 18, icon / 14 * 18, 18, 18);
 
                     RenderDrawCallback.drawFontBoldCentered(graphics, duration, posX + 15, posY + 10, potion.getColor(), 0);
                 }
