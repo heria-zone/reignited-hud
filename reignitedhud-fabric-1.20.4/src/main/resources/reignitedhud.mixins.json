@@ -5,6 +5,9 @@
 	"mixins": [
 		"ReignitedHudMixin"
 	],
+	"client": [
+		"GuiMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	}

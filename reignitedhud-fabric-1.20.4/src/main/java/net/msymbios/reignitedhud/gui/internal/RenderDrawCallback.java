@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.msymbios.reignitedhud.config.ReignitedHudConfig;
 import net.msymbios.reignitedhud.config.ReignitedHudID;
 
 public class RenderDrawCallback {
@@ -116,9 +117,6 @@ public class RenderDrawCallback {
      * @param shadow the color of the shadow
      */
     public static void drawFontBold(GuiGraphics graphics, String text, int posX, int posY, int color, int shadow) {
-        // Create a new matrix stack
-        PoseStack matrix = new PoseStack();
-
         // Get the font renderer instance
         Font font = Minecraft.getInstance().font;
 
@@ -190,8 +188,8 @@ public class RenderDrawCallback {
      * @return The width of the string in pixels
      */
     public static int getStringWidth(String string) {
-        Font fontrenderer = Minecraft.getInstance().font;
-        return fontrenderer.width(string);
+        Font font = Minecraft.getInstance().font;
+        return font.width(string);
     } // getStringWidth ()
 
     /**
@@ -203,7 +201,6 @@ public class RenderDrawCallback {
      * @param pos The position of the icon
      */
     public static void drawIcon(ResourceLocation icon, GuiGraphics graphics, int posX, int posY, int row, int pos) {
-        Minecraft minecraft = Minecraft.getInstance();
         graphics.blit(icon, posX, posY, pos * 10 - 10, row * 10 - 10, 10, 10);
     } // drawIcon ()
 
@@ -229,13 +226,8 @@ public class RenderDrawCallback {
      * @param fill The variable determining the fill amount of the bar (ranges from 0.0 to 1.0)
      */
     public static void drawMediumBar(ResourceLocation icon, GuiGraphics graphics, int posX, int posY, int bar, float fill) {
-        // Create a new matrix stack
-        PoseStack matrix = new PoseStack();
-        Minecraft minecraft = Minecraft.getInstance();
-
-        // Calculate the position in the texture for the bar
+        // Calculate the position in the texture for the bar & bar background
         int barNumber = bar * 10 - 10;
-        // Calculate the position in the texture for the bar background
         int barNumberBG = bar * 10 - 4;
 
         // Render the bar
@@ -254,10 +246,6 @@ public class RenderDrawCallback {
      * @param var the variation of the bar (normalized from 0 to 1)
      */
     public static void drawLongBar(ResourceLocation icon, GuiGraphics graphics, int posX, int posY, int bar, float var) {
-        // Create a new matrix stack
-        PoseStack matrix = new PoseStack();
-        Minecraft minecraft = Minecraft.getInstance();
-
         // Calculate the position of the bar in the texture
         int barNumber = bar * 10 - 10;
         int barNumberBG = bar * 10 - 4;
@@ -278,10 +266,6 @@ public class RenderDrawCallback {
      * @param var the variation of the bar (from 0 to 1)
      */
     public static void drawDurabilityBar(ResourceLocation icon, GuiGraphics graphics, int posX, int posY, int bar, float var) {
-        // Create a new matrix stack
-        PoseStack matrix = new PoseStack();
-        Minecraft minecraft = Minecraft.getInstance();
-
         // Calculate the position of the bar and background based on the durability level
         int barNumber = bar * 10 - 10;
         int barNumberBG = bar * 10 - 4;
@@ -306,6 +290,15 @@ public class RenderDrawCallback {
         if (player == null || stack.getItem() == Items.AIR) return;
 
         // Calculate additional offset based on player's vehicle
+        int posY = (!ReignitedHudConfig.PLAYER_SKIN &&
+                !ReignitedHudConfig.PLAYER_HEALTH &&
+                !ReignitedHudConfig.PLAYER_USERNAME &&
+                !ReignitedHudConfig.ARMOR_LEVEL &&
+                !ReignitedHudConfig.ARMOR_TOUGHNESS &&
+                !ReignitedHudConfig.FOOD_LEVEL &&
+                !ReignitedHudConfig.FOOD_SATURATION)
+                ? 0 : 50;
+
         int add = 0;
         if (player.getVehicle() instanceof LivingEntity) {
             if (player.getVehicle() instanceof Horse && ((Horse)player.getVehicle()).isTamed()) add += 33;
@@ -360,17 +353,14 @@ public class RenderDrawCallback {
             }
 
             // Draw the durability bar on the screen
-            RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_BAR);
-            drawDurabilityBar(ReignitedHudID.TEX_HUD_BAR, graphics,34, 74 + pos + add, tex, var);
+            drawDurabilityBar(ReignitedHudID.TEX_HUD_BAR, graphics,34, 24 + posY + pos + add, tex, var);
         }
 
         // Draw the base HUD elements
-        RenderSystem.setShaderTexture(0, ReignitedHudID.TEX_HUD_BASE);
-        graphics.blit(ReignitedHudID.TEX_HUD_BASE, 34, 61 + isdmgbl + pos + add, 49, 0, 39, 14);
-        graphics.blit(ReignitedHudID.TEX_HUD_BASE, 15, 60 + pos + add, 29, 0, 20, 20);
-        graphics.renderItem(stack, 17, 62 + pos + add);
-        drawFontWithShadow(graphics, display, 38, 64 + isdmgbl + pos + add, color, 0);
-
+        graphics.blit(ReignitedHudID.TEX_HUD_BASE, 34, 11 + posY  + isdmgbl + pos + add, 49, 0, 39, 14);
+        graphics.blit(ReignitedHudID.TEX_HUD_BASE, 15, 10 + posY  + pos + add, 29, 0, 20, 20);
+        graphics.renderItem(stack, 17, 12 + posY  + pos + add);
+        drawFontWithShadow(graphics, display, 38, 14 + posY  + isdmgbl + pos + add, color, 0);
     } // addDurabilityDisplay ()
 
 } // Class RenderDrawCallback
