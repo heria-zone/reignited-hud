@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "reignitedhud",
+	"version": "${version}",
+	"name": "Reignited HUD",
+	"description": "An RPG style HUD for Minecraft highly customizable!",
+	"authors": [
+		"MSymbios!"
+	],
+	"contact": {
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/reignited-hud",
+		"sources": "https://github.com/heria-zone/reignited-hud"
+	},
+	"license": "MIT",
+	"icon": "assets/reignitedhud/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.msymbios.reignitedhud.ReignitedHUD"
+		],
+		"client": [
+			"net.msymbios.reignitedhud.client.ReignitedHUDClient"
+		],
+		"modmenu": [
+			"net.msymbios.reignitedhud.integration.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"reignitedhud.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.19.2",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
