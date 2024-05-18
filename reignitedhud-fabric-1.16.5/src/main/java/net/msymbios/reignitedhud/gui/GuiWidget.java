@@ -3,33 +3,31 @@ package net.msymbios.reignitedhud.gui;
 import com.google.common.collect.Ordering;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.MainWindow;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.entity.IJumpingMount;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.horse.HorseEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.Difficulty;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.msymbios.reignitedhud.config.ReignitedHudConfig;
 import net.msymbios.reignitedhud.config.ReignitedHudID;
 import net.msymbios.reignitedhud.gui.internal.RenderDrawCallback;
-import net.minecraft.entity.ai.attributes.Attributes;
+import net.msymbios.reignitedhud.util.MathHelper;
 
 import java.util.Collection;
 import java.util.Map;
@@ -38,6 +36,7 @@ public class GuiWidget {
 
     // -- Variables --
     Minecraft minecraft = Minecraft.getInstance();
+    public static GuiWidget INSTANCE;
 
     // -- Constructors --
 
@@ -45,31 +44,19 @@ public class GuiWidget {
 
     // -- Methods --
 
-    @SubscribeEvent(priority = EventPriority.NORMAL)
-    public void disableDefaultOverlay(RenderGameOverlayEvent.Pre event) {
-        // Get the type of the overlay element
-        RenderGameOverlayEvent.ElementType type = event.getType();
-
-        // Cancel rendering for specific overlay types
-        if (type == RenderGameOverlayEvent.ElementType.ARMOR || type == RenderGameOverlayEvent.ElementType.AIR ||
-                type == RenderGameOverlayEvent.ElementType.BOSSINFO || type == RenderGameOverlayEvent.ElementType.EXPERIENCE ||
-                type == RenderGameOverlayEvent.ElementType.FOOD || type == RenderGameOverlayEvent.ElementType.HEALTH ||
-                type == RenderGameOverlayEvent.ElementType.HEALTHMOUNT || type == RenderGameOverlayEvent.ElementType.JUMPBAR ||
-                type == RenderGameOverlayEvent.ElementType.POTION_ICONS) {
-            event.setCanceled(true);
-        }
-    } // disableDefaultOverlay ()
+    public static void register() {
+        INSTANCE = new GuiWidget();
+        HudRenderCallback.EVENT.register(INSTANCE::renderOverlay);
+    } // register ()
 
     /**
      * Renders the game overlay based on the event type.
      *
-     * @param event The RenderGameOverlayEvent.Pre event
      */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void renderOverlay(RenderGameOverlayEvent.Post event) {
+    public void renderOverlay(PoseStack poseStack, float v) {
         // Get the player and the game window
-        ClientPlayerEntity player = this.minecraft.player;
-        MainWindow scaled = minecraft.getWindow();
+        LocalPlayer player = this.minecraft.player;
+        Window scaled = minecraft.getWindow();
 
         // Check if the player is not a null
         if (player == null) return;
@@ -79,17 +66,17 @@ public class GuiWidget {
             GlStateManager._clearColor(1.0F, 1.0F, 1.0F, 1.0F);
 
             // Render different parts of the HUD
-            if (ReignitedHudConfig.PLAYER_SKIN.get()) this.getWidgetBase(player);
-            if (ReignitedHudConfig.PLAYER_USERNAME.get()) this.getPlayerName(player);
-            if (ReignitedHudConfig.PLAYER_HEALTH.get()) this.getPlayerHealthBar(player);
-            if (ReignitedHudConfig.PLAYER_AIR_SUPPLY.get()) this.getPlayerAirBar(player, scaled);
+            if (ReignitedHudConfig.PLAYER_SKIN) this.getWidgetBase(player);
+            if (ReignitedHudConfig.PLAYER_USERNAME) this.getPlayerName(player);
+            if (ReignitedHudConfig.PLAYER_HEALTH) this.getPlayerHealthBar(player);
+            if (ReignitedHudConfig.PLAYER_AIR_SUPPLY) this.getPlayerAirBar(player, scaled);
 
             this.getFoodAndArmor(player);
             this.getItems(player);
 
-            if (ReignitedHudConfig.MOUNT.get()) this.getMountInfo(player);
-            if (ReignitedHudConfig.EFFECT.get()) this.getEffects(player, scaled);
-            if (ReignitedHudConfig.CLOCK_TIME.get()) this.getClock(scaled);
+            if (ReignitedHudConfig.MOUNT) this.getMountInfo(player);
+            if (ReignitedHudConfig.EFFECT) this.getEffects(player, scaled);
+            if (ReignitedHudConfig.CLOCK_TIME) this.getClock(scaled);
         }
 
     } // renderOverlay ()
@@ -99,9 +86,9 @@ public class GuiWidget {
      *
      * @param player The client player entity
      */
-    private void getWidgetBase(ClientPlayerEntity player) {
+    private void getWidgetBase(LocalPlayer player) {
         // Create a new matrix stack
-        MatrixStack pose = new MatrixStack();
+        PoseStack pose = new PoseStack();
 
         // Get the player's game profile
         GameProfile profile = player.getGameProfile();
@@ -120,25 +107,25 @@ public class GuiWidget {
                 playerSkin = this.minecraft.getSkinManager().registerTexture(map.get(MinecraftProfileTexture.Type.SKIN), MinecraftProfileTexture.Type.SKIN);
             } else {
                 // Use the default skin if the player's skin is not found
-                playerSkin = DefaultPlayerSkin.getDefaultSkin(PlayerEntity.createPlayerUUID(profile));
+                playerSkin = DefaultPlayerSkin.getDefaultSkin(Player.createPlayerUUID(profile));
             }
         }
 
         // Render HUD elements
 
         // Render HUD bar
-        this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BAR);
+        this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BAR);
         minecraft.gui.blit(pose, 13, 13, 227, 0, 5, 25);
 
         // Render dynamic HUD element based on player's experience progress
         minecraft.gui.blit(pose, 14, 14, 223, 1, 3, 23 - (int)(player.experienceProgress  * 23.0F));
 
         // Render HUD base
-        this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BASE);
+        this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BASE);
         minecraft.gui.blit(pose, 15, 11, 0, 0, 29, 29);
 
         // Bind player's skin texture and render player icon on HUD
-        this.minecraft.textureManager.bind(playerSkin);
+        this.minecraft.getTextureManager().bind(playerSkin);
         RenderDrawCallback.drawPlayerIcon(21, 17, 17);
 
         // Display the player's experience level
@@ -149,7 +136,7 @@ public class GuiWidget {
         if(this.minecraft.level != null) {
             if (this.minecraft.level.getDifficulty() == Difficulty.HARD) {
                 // Display a specific icon for hard difficulty
-                this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+                this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
                 RenderDrawCallback.drawIcon(25, 11, 4, 2);
             }
         }
@@ -160,12 +147,12 @@ public class GuiWidget {
      *
      * @param player The player entity whose name will be rendered
      */
-    public void getPlayerName(ClientPlayerEntity player) {
+    public void getPlayerName(LocalPlayer player) {
         // Get the player's name as a string
         String playerName = player.getName().getString();
 
         // Set the position for rendering the player's name
-        int posX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 5 : 48;
+        int posX = !ReignitedHudConfig.PLAYER_SKIN ? 5 : 48;
         int posY = 13;
 
         // Set the color for rendering the player's name
@@ -180,22 +167,22 @@ public class GuiWidget {
      *
      * @param player The client player entity to retrieve health and effects from
      */
-    private void getPlayerHealthBar(ClientPlayerEntity player) {
+    private void getPlayerHealthBar(LocalPlayer player) {
         // Calculate the fill amount of current health to max health
         float fill = Math.min(1.0F, player.getHealth() / player.getMaxHealth());
 
         // Set the position for rendering
-        int posX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 5 : 48;
+        int posX = !ReignitedHudConfig.PLAYER_SKIN ? 5 : 48;
         int posY = 24;
 
         // Determine the type of health bar based on player effects
         int bar = 1;
-        if (player.hasEffect(Effects.ABSORPTION)) bar = 2;
-        if (player.hasEffect(Effects.HUNGER)) bar = 3;
-        if (player.hasEffect(Effects.WITHER)) bar = 4;
+        if (player.hasEffect(MobEffects.ABSORPTION)) bar = 2;
+        if (player.hasEffect(MobEffects.HUNGER)) bar = 3;
+        if (player.hasEffect(MobEffects.WITHER)) bar = 4;
 
         // Bind the health bar texture and render the bar
-        this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BAR);
+        this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BAR);
         RenderDrawCallback.drawMediumBar(posX, posY, bar, fill);
     } // getPlayerHealthBar ()
 
@@ -205,7 +192,7 @@ public class GuiWidget {
      * @param player The player entity
      * @param scaled The Window object containing the scaled GUI dimensions
      */
-    private void getPlayerAirBar(ClientPlayerEntity player, MainWindow scaled) {
+    private void getPlayerAirBar(LocalPlayer player, Window scaled) {
         // Get the screen width and height from the scaled GUI dimensions
         int screenWidth = scaled.getGuiScaledWidth();
         int screenHeight = scaled.getGuiScaledHeight();
@@ -222,7 +209,7 @@ public class GuiWidget {
             float air = (float)player.getAirSupply();
 
             // Bind the air bar texture and render the air bar based on the player's air supply
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BAR);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BAR);
             RenderDrawCallback.drawLongBar(posX, posY, 5, air / 300.0F);
 
             // Determine the texture X position based on the player's air supply level
@@ -231,8 +218,8 @@ public class GuiWidget {
             if (player.getAirSupply() > 0 && player.getAirSupply() <= 2) texX = 60;
 
             // Bind the air bar icon texture and render the icon if the player's air supply is not full
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
-            minecraft.gui.blit(new MatrixStack(), screenWidth / 2 - 4, posY - 2, texX, 0, 10, 10);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
+            minecraft.gui.blit(new PoseStack(), screenWidth / 2 - 4, posY - 2, texX, 0, 10, 10);
 
             this.minecraft.getProfiler().pop();
         }
@@ -246,10 +233,10 @@ public class GuiWidget {
      *
      * @param player The client player entity
      */
-    private void getMountInfo(ClientPlayerEntity player) {
+    private void getMountInfo(LocalPlayer player) {
         if (player.getVehicle() instanceof LivingEntity) {
             // Create a new matrix stack
-            MatrixStack pose = new MatrixStack();
+            PoseStack pose = new PoseStack();
 
             LivingEntity mount = (LivingEntity)player.getVehicle();
             float health = 1.0F;
@@ -259,25 +246,25 @@ public class GuiWidget {
                 health = mount.getHealth() / mount.getMaxHealth();
 
             // Display the base HUD texture
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BASE);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BASE);
 
             // Check if the mount is a tamed HorseEntity to display the appropriate icon
-            if (mount instanceof HorseEntity && ((HorseEntity)mount).isTamed()) {
+            if (mount instanceof Horse && ((Horse)mount).isTamed()) {
                 minecraft.gui.blit(pose, 15, 56, 0, 29, 6, 25);
             } else {
                 minecraft.gui.blit(pose, 15, 56, 6, 29, 6, 19);
             }
 
             // Display the icon texture
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
             RenderDrawCallback.drawIcon(23, 57, 1, 10);
 
             // Display the health bar texture
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BAR);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BAR);
             RenderDrawCallback.drawMediumBar(23, 68, 1, health);
 
             // Check if the mount implements IJumpingMount and is tamed to display the jump bar
-            if (mount instanceof IJumpingMount && ((HorseEntity)mount).isTamed())
+            if (mount instanceof PlayerRideableJumping && ((Horse)mount).isTamed())
                 RenderDrawCallback.drawMediumBar(23, 74, 5, player.getJumpRidingScale());
 
             // Display the mount's name on the HUD
@@ -287,28 +274,28 @@ public class GuiWidget {
 
     } // getMountInfo ()
 
-    private void getFoodAndArmor(ClientPlayerEntity player) {
+    private void getFoodAndArmor(LocalPlayer player) {
         // GENERAL
         int color, shadow;
 
         String text;
         int icon;
 
-        int iconPosX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 4 : 47;
+        int iconPosX = !ReignitedHudConfig.PLAYER_SKIN ? 4 : 47;
         int iconPosY = 31;
 
-        int textPosX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 16 : 59;
+        int textPosX = !ReignitedHudConfig.PLAYER_SKIN ? 16 : 59;
         int textPosY = 32;
 
         // FOOD
-        if (ReignitedHudConfig.FOOD_LEVEL.get()) {
+        if (ReignitedHudConfig.FOOD_LEVEL) {
             text = String.valueOf(player.getFoodData().getFoodLevel());     // Get the player's hunger value as a string
-            icon = player.hasEffect(Effects.HUNGER) ? 2 : 1;             // Determine the icon to display based on player's hunger effect
+            icon = player.hasEffect(MobEffects.HUNGER) ? 2 : 1;             // Determine the icon to display based on player's hunger effect
 
             // Set & Adjust default color and shadow for the food value display if player has hunger effect or not
-            color = player.hasEffect(Effects.HUNGER) ? 7636056 : 11960912;
-            shadow = player.hasEffect(Effects.HUNGER) ? 1710089 : 3349772;
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+            color = player.hasEffect(MobEffects.HUNGER) ? 7636056 : 11960912;
+            shadow = player.hasEffect(MobEffects.HUNGER) ? 1710089 : 3349772;
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
 
             // Draw the food icon on the HUD
             RenderDrawCallback.drawIcon(iconPosX, iconPosY, 1, icon);
@@ -322,14 +309,14 @@ public class GuiWidget {
         }
 
         // SATURATION
-        if (ReignitedHudConfig.FOOD_SATURATION.get()) {
+        if (ReignitedHudConfig.FOOD_SATURATION) {
             text = String.valueOf((int)player.getFoodData().getSaturationLevel());
-            icon = player.hasEffect(Effects.HUNGER) ? 3 : 4;
+            icon = player.hasEffect(MobEffects.HUNGER) ? 3 : 4;
 
             // Set colors for text and shadow
             color = 14533185;
             shadow = 3682053;
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
 
             // Draw hunger icon
             RenderDrawCallback.drawIcon(iconPosX, iconPosY, 1, icon);
@@ -344,7 +331,7 @@ public class GuiWidget {
 
         // ARMOR
         int armor = (int)player.getAttributeValue(Attributes.ARMOR);
-        if (ReignitedHudConfig.ARMOR_LEVEL.get() && armor > 0) {
+        if (ReignitedHudConfig.ARMOR_LEVEL && armor > 0) {
             // Get the player's armor value
             text = String.valueOf(armor);
             icon = 8;
@@ -352,7 +339,7 @@ public class GuiWidget {
             // Set colors for text and shadow
             color = 12106180;
             shadow = 1579034;
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
 
             RenderDrawCallback.drawIcon(iconPosX, iconPosY, 1, icon);
             RenderDrawCallback.drawFontWithShadow(text, textPosX, textPosY, color, shadow);
@@ -364,7 +351,7 @@ public class GuiWidget {
 
         // TOUGHNESS
         int toughness = (int)player.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
-        if (ReignitedHudConfig.ARMOR_TOUGHNESS.get() && toughness > 0.0) {
+        if (ReignitedHudConfig.ARMOR_TOUGHNESS && toughness > 0.0) {
             // Get the player's armor toughness value
             text = String.valueOf(toughness);
             icon = 9;
@@ -372,7 +359,7 @@ public class GuiWidget {
             // Set colors for text and shadow
             color = 12106180;
             shadow = 1579034;
-            this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+            this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
 
             RenderDrawCallback.drawIcon(iconPosX, iconPosY, 1, icon);
             RenderDrawCallback.drawFontWithShadow(text, textPosX, textPosY, color, shadow);
@@ -386,16 +373,16 @@ public class GuiWidget {
      *
      * @param player The client player entity to retrieve equipped items from
      */
-    private void getItems(ClientPlayerEntity player) {
+    private void getItems(LocalPlayer player) {
         // Initialize position for rendering
         int pos = 0;
 
-        if (ReignitedHudConfig.ITEM_EQUIPMENT.get()) {
+        if (ReignitedHudConfig.ITEM_EQUIPMENT) {
             // Retrieve equipped items
-            ItemStack head = player.getItemBySlot(EquipmentSlotType.HEAD);
-            ItemStack chest = player.getItemBySlot(EquipmentSlotType.CHEST);
-            ItemStack legs = player.getItemBySlot(EquipmentSlotType.LEGS);
-            ItemStack feet = player.getItemBySlot(EquipmentSlotType.FEET);
+            ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+            ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+            ItemStack legs = player.getItemBySlot(EquipmentSlot.LEGS);
+            ItemStack feet = player.getItemBySlot(EquipmentSlot.FEET);
 
             // Display durability for the head item
             RenderDrawCallback.addDurabilityDisplay(head, pos);
@@ -414,7 +401,7 @@ public class GuiWidget {
             if (feet.getItem() != Items.AIR) pos += 25;
         }
 
-        if (ReignitedHudConfig.ITEM_HAND.get()) {
+        if (ReignitedHudConfig.ITEM_HAND) {
             ItemStack mainHandItem = player.getMainHandItem();
             ItemStack offhandItem = player.getOffhandItem();
 
@@ -433,13 +420,13 @@ public class GuiWidget {
      * @param player The client player entity to retrieve active effects from
      * @param scaled The scaled window for GUI rendering
      */
-    private void getEffects(ClientPlayerEntity player, MainWindow scaled) {
+    private void getEffects(LocalPlayer player, Window scaled) {
         // Get the screen width and height
         int screenWidth = scaled.getGuiScaledWidth();
         int screenHeight = scaled.getGuiScaledHeight();
 
         // Retrieve the active effects of the player
-        Collection<EffectInstance> collection = player.getActiveEffects();
+        Collection<MobEffectInstance> collection = player.getActiveEffects();
 
         // Check if there are any active effects to render
         if (!collection.isEmpty()) {
@@ -448,8 +435,8 @@ public class GuiWidget {
             int harmfulEffectsCount = 0;
 
             // Iterate through each active effect
-            for (EffectInstance potionEffect : Ordering.natural().reverse().sortedCopy(collection)) {
-                Effect potion = potionEffect.getEffect();
+            for (MobEffectInstance potionEffect : Ordering.natural().reverse().sortedCopy(collection)) {
+                MobEffect potion = potionEffect.getEffect();
 
                 // Check if the effect has an icon to display
                 if (potionEffect.showIcon()) {
@@ -477,11 +464,11 @@ public class GuiWidget {
 
                     // Render the effect icon and duration
                     GlStateManager._clearColor(1.0F, 1.0F, 1.0F, 1.0F);
-                    this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BASE);
-                    minecraft.gui.blit(new MatrixStack(), posX, posY, 88, 0, 29, 21);
+                    this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BASE);
+                    minecraft.gui.blit(new PoseStack(), posX, posY, 88, 0, 29, 21);
                     GlStateManager._clearColor(1.0F, 1.0F, 1.0F, transparency);
-                    this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_EFFECT);
-                    minecraft.gui.blit(new MatrixStack(), posX + 6, posY - 3, icon % 14 * 18, icon / 14 * 18, 18, 18);
+                    this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_EFFECT);
+                    minecraft.gui.blit(new PoseStack(), posX + 6, posY - 3, icon % 14 * 18, icon / 14 * 18, 18, 18);
                     RenderDrawCallback.drawFontBoldCentered(duration, posX + 15, posY + 10, potion.getColor(), 0);
                 }
             }
@@ -494,7 +481,7 @@ public class GuiWidget {
      *
      * @param scaled The scaled window to get dimensions from
      */
-    private void getClock(MainWindow scaled) {
+    private void getClock(Window scaled) {
         // Get the screen width and height from the scaled window
         int screenWidth = scaled.getGuiScaledWidth();
         int screenHeight = scaled.getGuiScaledHeight();
@@ -525,10 +512,10 @@ public class GuiWidget {
         if (minute < 10) minutedisplay = "0" + minute;
 
         // Bind textures and draw clock elements on the HUD
-        this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_BASE);
-        minecraft.gui.blit(new MatrixStack(), screenWidth / 2 - 22, screenHeight - 36, 165, 0, 44, 14);
+        this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_BASE);
+        minecraft.gui.blit(new PoseStack(), screenWidth / 2 - 22, screenHeight - 36, 165, 0, 44, 14);
 
-        this.minecraft.textureManager.bind(ReignitedHudID.TEX_HUD_ICON);
+        this.minecraft.getTextureManager().bind(ReignitedHudID.TEX_HUD_ICON);
         RenderDrawCallback.drawIcon(screenWidth / 2 - 19, screenHeight - 33, row, icon);
         RenderDrawCallback.drawFontWithShadowCentered(hourdisplay + ":" + minutedisplay, screenWidth / 2 + 5, screenHeight - 32, color, 0);
     } // getClock ()
@@ -540,31 +527,31 @@ public class GuiWidget {
      * @param effect The type of effect to get the icon index for
      * @return The icon index corresponding to the effect type
      */
-    private int getEffectIconIndex(Effect effect) {
-        if (effect == Effects.MOVEMENT_SPEED) return 0;
-        else if (effect == Effects.MOVEMENT_SLOWDOWN) return 1;
-        else if (effect == Effects.DIG_SPEED) return 2;
-        else if (effect == Effects.DIG_SLOWDOWN) return 3;
-        else if (effect == Effects.DAMAGE_BOOST) return 4;
-        else if (effect == Effects.WEAKNESS) return 5;
-        else if (effect == Effects.POISON) return 6;
-        else if (effect == Effects.REGENERATION) return 7;
-        else if (effect == Effects.INVISIBILITY) return 8;
-        else if (effect == Effects.HUNGER) return 9;
-        else if (effect == Effects.JUMP) return 10;
-        else if (effect == Effects.CONFUSION) return 11;
-        else if (effect == Effects.NIGHT_VISION) return 12;
-        else if (effect == Effects.BLINDNESS) return 13;
-        else if (effect == Effects.DAMAGE_RESISTANCE) return 14;
-        else if (effect == Effects.FIRE_RESISTANCE) return 15;
-        else if (effect == Effects.WATER_BREATHING) return 16;
-        else if (effect == Effects.WITHER) return 17;
-        else if (effect == Effects.ABSORPTION) return 18;
-        else if (effect == Effects.LEVITATION) return 19;
-        else if (effect == Effects.GLOWING) return 20;
-        else if (effect == Effects.LUCK) return 21;
-        else if (effect == Effects.UNLUCK) return 22;
-        else if (effect == Effects.HEALTH_BOOST) return 23;
+    private int getEffectIconIndex(MobEffect effect) {
+        if (effect == MobEffects.MOVEMENT_SPEED) return 0;
+        else if (effect == MobEffects.MOVEMENT_SLOWDOWN) return 1;
+        else if (effect == MobEffects.DIG_SPEED) return 2;
+        else if (effect == MobEffects.DIG_SLOWDOWN) return 3;
+        else if (effect == MobEffects.DAMAGE_BOOST) return 4;
+        else if (effect == MobEffects.WEAKNESS) return 5;
+        else if (effect == MobEffects.POISON) return 6;
+        else if (effect == MobEffects.REGENERATION) return 7;
+        else if (effect == MobEffects.INVISIBILITY) return 8;
+        else if (effect == MobEffects.HUNGER) return 9;
+        else if (effect == MobEffects.JUMP) return 10;
+        else if (effect == MobEffects.CONFUSION) return 11;
+        else if (effect == MobEffects.NIGHT_VISION) return 12;
+        else if (effect == MobEffects.BLINDNESS) return 13;
+        else if (effect == MobEffects.DAMAGE_RESISTANCE) return 14;
+        else if (effect == MobEffects.FIRE_RESISTANCE) return 15;
+        else if (effect == MobEffects.WATER_BREATHING) return 16;
+        else if (effect == MobEffects.WITHER) return 17;
+        else if (effect == MobEffects.ABSORPTION) return 18;
+        else if (effect == MobEffects.LEVITATION) return 19;
+        else if (effect == MobEffects.GLOWING) return 20;
+        else if (effect == MobEffects.LUCK) return 21;
+        else if (effect == MobEffects.UNLUCK) return 22;
+        else if (effect == MobEffects.HEALTH_BOOST) return 23;
         else return 195; // Default icon index
     } // getEffectIconIndex ()
 
@@ -574,7 +561,7 @@ public class GuiWidget {
      * @param potionEffect The effect instance to calculate transparency for
      * @return The transparency value for rendering the effect
      */
-    private float calculateEffectTransparency(EffectInstance potionEffect) {
+    private float calculateEffectTransparency(MobEffectInstance potionEffect) {
         // No change in transparency if duration is over 200
         if (potionEffect.getDuration() > 200) return 1.0F;
 
