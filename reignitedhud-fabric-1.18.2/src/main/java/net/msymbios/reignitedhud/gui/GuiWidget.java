@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -24,11 +25,6 @@ import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.gui.ForgeIngameGui;
-import net.minecraftforge.client.gui.IIngameOverlay;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.msymbios.reignitedhud.config.ReignitedHudConfig;
 import net.msymbios.reignitedhud.config.ReignitedHudID;
 import net.msymbios.reignitedhud.gui.internal.RenderDrawCallback;
@@ -41,6 +37,7 @@ public class GuiWidget {
 
     // -- Variables --
     Minecraft minecraft = Minecraft.getInstance();
+    public static GuiWidget INSTANCE;
 
     // -- Constructors --
 
@@ -48,27 +45,16 @@ public class GuiWidget {
 
     // -- Methods --
 
-    @SubscribeEvent(priority = EventPriority.NORMAL)
-    public void disableDefaultOverlay(RenderGameOverlayEvent.PreLayer event) {
-        // Get the overlay of the overlay element
-        IIngameOverlay overlay = event.getOverlay();
-
-        // Cancel rendering for specific overlay types
-        if (overlay == ForgeIngameGui.ARMOR_LEVEL_ELEMENT || overlay == ForgeIngameGui.AIR_LEVEL_ELEMENT ||
-                overlay == ForgeIngameGui.EXPERIENCE_BAR_ELEMENT || overlay == ForgeIngameGui.POTION_ICONS_ELEMENT ||
-                overlay == ForgeIngameGui.FOOD_LEVEL_ELEMENT || overlay == ForgeIngameGui.PLAYER_HEALTH_ELEMENT ||
-                overlay == ForgeIngameGui.MOUNT_HEALTH_ELEMENT || overlay == ForgeIngameGui.JUMP_BAR_ELEMENT) {
-            event.setCanceled(true);
-        }
-    } // disableDefaultOverlay ()
+    public static void register() {
+        INSTANCE = new GuiWidget();
+        HudRenderCallback.EVENT.register(INSTANCE::renderOverlay);
+    } // register ()
 
     /**
      * Renders the game overlay based on the event type.
      *
-     * @param event The RenderGameOverlayEvent.Pre event
      */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void renderOverlay(RenderGameOverlayEvent.Post event) {
+    public void renderOverlay(PoseStack poseStack, float v) {
         // Get the player and the game window
         LocalPlayer player = this.minecraft.player;
         Window scaled = minecraft.getWindow();
@@ -81,17 +67,17 @@ public class GuiWidget {
             GlStateManager._clearColor(1.0F, 1.0F, 1.0F, 1.0F);
 
             // Render different parts of the HUD
-            if (ReignitedHudConfig.PLAYER_SKIN.get()) this.getWidgetBase(player);
-            if (ReignitedHudConfig.PLAYER_USERNAME.get()) this.getPlayerName(player);
-            if (ReignitedHudConfig.PLAYER_HEALTH.get()) this.getPlayerHealthBar(player);
-            if (ReignitedHudConfig.PLAYER_AIR_SUPPLY.get()) this.getPlayerAirBar(player, scaled);
+            if (ReignitedHudConfig.PLAYER_SKIN) this.getWidgetBase(player);
+            if (ReignitedHudConfig.PLAYER_USERNAME) this.getPlayerName(player);
+            if (ReignitedHudConfig.PLAYER_HEALTH) this.getPlayerHealthBar(player);
+            if (ReignitedHudConfig.PLAYER_AIR_SUPPLY) this.getPlayerAirBar(player, scaled);
 
             this.getFoodAndArmor(player);
             this.getItems(player);
 
-            if (ReignitedHudConfig.MOUNT.get()) this.getMountInfo(player);
-            if (ReignitedHudConfig.EFFECT.get()) this.getEffects(player, scaled);
-            if (ReignitedHudConfig.CLOCK_TIME.get()) this.getClock(scaled);
+            if (ReignitedHudConfig.MOUNT) this.getMountInfo(player);
+            if (ReignitedHudConfig.EFFECT) this.getEffects(player, scaled);
+            if (ReignitedHudConfig.CLOCK_TIME) this.getClock(scaled);
         }
 
     } // renderOverlay ()
@@ -167,7 +153,7 @@ public class GuiWidget {
         String playerName = player.getName().getString();
 
         // Set the position for rendering the player's name
-        int posX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 5 : 48;
+        int posX = !ReignitedHudConfig.PLAYER_SKIN ? 5 : 48;
         int posY = 13;
 
         // Set the color for rendering the player's name
@@ -187,7 +173,7 @@ public class GuiWidget {
         float fill = Math.min(1.0F, player.getHealth() / player.getMaxHealth());
 
         // Set the position for rendering
-        int posX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 5 : 48;
+        int posX = !ReignitedHudConfig.PLAYER_SKIN ? 5 : 48;
         int posY = 24;
 
         // Determine the type of health bar based on player effects
@@ -296,14 +282,14 @@ public class GuiWidget {
         String text;
         int icon;
 
-        int iconPosX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 4 : 47;
+        int iconPosX = !ReignitedHudConfig.PLAYER_SKIN ? 4 : 47;
         int iconPosY = 31;
 
-        int textPosX = !ReignitedHudConfig.PLAYER_SKIN.get() ? 16 : 59;
+        int textPosX = !ReignitedHudConfig.PLAYER_SKIN ? 16 : 59;
         int textPosY = 32;
 
         // FOOD
-        if (ReignitedHudConfig.FOOD_LEVEL.get()) {
+        if (ReignitedHudConfig.FOOD_LEVEL) {
             text = String.valueOf(player.getFoodData().getFoodLevel());     // Get the player's hunger value as a string
             icon = player.hasEffect(MobEffects.HUNGER) ? 2 : 1;             // Determine the icon to display based on player's hunger effect
 
@@ -324,7 +310,7 @@ public class GuiWidget {
         }
 
         // SATURATION
-        if (ReignitedHudConfig.FOOD_SATURATION.get()) {
+        if (ReignitedHudConfig.FOOD_SATURATION) {
             text = String.valueOf((int)player.getFoodData().getSaturationLevel());
             icon = player.hasEffect(MobEffects.HUNGER) ? 3 : 4;
 
@@ -346,7 +332,7 @@ public class GuiWidget {
 
         // ARMOR
         int armor = (int)player.getAttributeValue(Attributes.ARMOR);
-        if (ReignitedHudConfig.ARMOR_LEVEL.get() && armor > 0) {
+        if (ReignitedHudConfig.ARMOR_LEVEL && armor > 0) {
             // Get the player's armor value
             text = String.valueOf(armor);
             icon = 8;
@@ -366,7 +352,7 @@ public class GuiWidget {
 
         // TOUGHNESS
         int toughness = (int)player.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
-        if (ReignitedHudConfig.ARMOR_TOUGHNESS.get() && toughness > 0.0) {
+        if (ReignitedHudConfig.ARMOR_TOUGHNESS && toughness > 0.0) {
             // Get the player's armor toughness value
             text = String.valueOf(toughness);
             icon = 9;
@@ -392,7 +378,7 @@ public class GuiWidget {
         // Initialize position for rendering
         int pos = 0;
 
-        if (ReignitedHudConfig.ITEM_EQUIPMENT.get()) {
+        if (ReignitedHudConfig.ITEM_EQUIPMENT) {
             // Retrieve equipped items
             ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
             ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
@@ -416,7 +402,7 @@ public class GuiWidget {
             if (feet.getItem() != Items.AIR) pos += 25;
         }
 
-        if (ReignitedHudConfig.ITEM_HAND.get()) {
+        if (ReignitedHudConfig.ITEM_HAND) {
             ItemStack mainHandItem = player.getMainHandItem();
             ItemStack offhandItem = player.getOffhandItem();
 

@@ -312,13 +312,13 @@ public class RenderDrawCallback {
         if (player == null || stack.getItem() == Items.AIR) return;
 
         // Calculate additional offset based on player's vehicle
-        int posY = (!ReignitedHudConfig.PLAYER_SKIN.get() &&
-                !ReignitedHudConfig.PLAYER_HEALTH.get() &&
-                !ReignitedHudConfig.PLAYER_USERNAME.get() &&
-                !ReignitedHudConfig.ARMOR_LEVEL.get() &&
-                !ReignitedHudConfig.ARMOR_TOUGHNESS.get() &&
-                !ReignitedHudConfig.FOOD_LEVEL.get() &&
-                !ReignitedHudConfig.FOOD_SATURATION.get())
+        int posY = (!ReignitedHudConfig.PLAYER_SKIN &&
+                !ReignitedHudConfig.PLAYER_HEALTH &&
+                !ReignitedHudConfig.PLAYER_USERNAME &&
+                !ReignitedHudConfig.ARMOR_LEVEL &&
+                !ReignitedHudConfig.ARMOR_TOUGHNESS &&
+                !ReignitedHudConfig.FOOD_LEVEL &&
+                !ReignitedHudConfig.FOOD_SATURATION)
                 ? 0 : 50;
 
         int add = 0;
