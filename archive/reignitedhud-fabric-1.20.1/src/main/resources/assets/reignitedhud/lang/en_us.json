@@ -1,0 +1,45 @@
+{
+  "text.autoconfig.reignitedhud.title": "Reignited HUD",
+
+  "text.autoconfig.reignitedhud.category.player": "Player",
+  "text.autoconfig.reignitedhud.category.armor": "Armor",
+  "text.autoconfig.reignitedhud.category.food": "Food",
+  "text.autoconfig.reignitedhud.category.item": "Item",
+  "text.autoconfig.reignitedhud.category.default": "Miscellaneous",
+
+  "text.autoconfig.reignitedhud.option.PLAYER_HEALTH": "Health",
+  "text.autoconfig.reignitedhud.option.PLAYER_SKIN": "Skins",
+  "text.autoconfig.reignitedhud.option.PLAYER_USERNAME": "Username",
+  "text.autoconfig.reignitedhud.option.PLAYER_AIR_SUPPLY": "Air Supply",
+
+  "text.autoconfig.reignitedhud.option.FOOD_LEVEL": "Food Level",
+  "text.autoconfig.reignitedhud.option.FOOD_SATURATION": "Food Saturation",
+
+  "text.autoconfig.reignitedhud.option.ARMOR_LEVEL": "Armor Level",
+  "text.autoconfig.reignitedhud.option.ARMOR_TOUGHNESS": "Armor Toughness",
+
+  "text.autoconfig.reignitedhud.option.ITEM_EQUIPMENT": "Equipment Items Durability",
+  "text.autoconfig.reignitedhud.option.ITEM_HAND": "Hand Items Durability",
+
+  "text.autoconfig.reignitedhud.option.CLOCK_TIME": "Clock",
+  "text.autoconfig.reignitedhud.option.EFFECT": "Effects",
+  "text.autoconfig.reignitedhud.option.MOUNT": "Mount Information",
+
+  "text.autoconfig.reignitedhud.option.PLAYER_HEALTH.@Tooltip": "Toggle Player Health",
+  "text.autoconfig.reignitedhud.option.PLAYER_SKIN.@Tooltip": "Toggle Player Skins",
+  "text.autoconfig.reignitedhud.option.PLAYER_USERNAME.@Tooltip": "Toggle Player Username",
+  "text.autoconfig.reignitedhud.option.PLAYER_AIR_SUPPLY.@Tooltip": "Toggle Player Air Supply",
+
+  "text.autoconfig.reignitedhud.option.FOOD_LEVEL.@Tooltip": "Toggle Food Level Display",
+  "text.autoconfig.reignitedhud.option.FOOD_SATURATION.@Tooltip": "Toggle Food Saturation Display",
+
+  "text.autoconfig.reignitedhud.option.ARMOR_LEVEL.@Tooltip": "Toggle Armor Level Display",
+  "text.autoconfig.reignitedhud.option.ARMOR_TOUGHNESS.@Tooltip": "Toggle Armor Toughness Display",
+
+  "text.autoconfig.reignitedhud.option.ITEM_EQUIPMENT.@Tooltip": "Toggle Equipment Items Durability Display",
+  "text.autoconfig.reignitedhud.option.ITEM_HAND.@Tooltip": "Toggle Hand Items Durability Display",
+
+  "text.autoconfig.reignitedhud.option.CLOCK_TIME.@Tooltip": "Toggle Clock Display",
+  "text.autoconfig.reignitedhud.option.EFFECT.@Tooltip": "Toggle Active Effects Display",
+  "text.autoconfig.reignitedhud.option.MOUNT.@Tooltip": "Toggle Mount Information Display"
+}

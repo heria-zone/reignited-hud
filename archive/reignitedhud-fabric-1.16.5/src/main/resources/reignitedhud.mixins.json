@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "net.msymbios.reignitedhud.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"ReignitedHudMixin"
+	],
+	"client": [
+		"GuiMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

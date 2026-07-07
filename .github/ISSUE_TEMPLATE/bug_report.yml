@@ -1,0 +1,108 @@
+name: Bug Report
+description: Something isn't displaying correctly or the mod is crashing. Thanks for taking the time to report it.
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hey, thanks for the report! The more detail you give here, the faster we can track it down.
+        Check [existing issues](../issues) before submitting — it may already be reported.
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: Reignited HUD Version
+      placeholder: "e.g. 1.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft Version
+      placeholder: "e.g. 1.21.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: loader
+    attributes:
+      label: Mod Loader
+      options:
+        - Fabric
+        - Forge
+        - NeoForge
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-elements
+    attributes:
+      label: Affected HUD Elements
+      description: Which HUD elements are involved in the bug?
+      multiple: true
+      options:
+        - Health Bar
+        - Hunger Bar
+        - Experience Bar
+        - Breathing Bar
+        - Mount Information
+        - Equipment Slot Display
+        - Item in Hand Display
+        - Player Skin
+        - Player Username
+        - Clock
+        - Status Effects Display
+        - All elements
+        - Not element-specific (crash / config issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant Config Settings
+      description: Any non-default config settings that might be relevant.
+      placeholder: "e.g. health_bar_scale = 1.5, clock_enabled = false"
+
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other Mods Installed
+      description: HUD conflicts are common. List other mods, especially other HUD or rendering mods.
+      placeholder: "e.g. Sodium 0.5.x, Iris 1.6.x, ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What Did You Expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Launch Minecraft with these mods
+        2. Load a world
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: crash-log
+    attributes:
+      label: Crash Log / latest.log
+      description: Paste relevant log output. Find it in `.minecraft/logs/latest.log`.
+      render: text

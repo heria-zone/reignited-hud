@@ -1,0 +1,52 @@
+name: Feature Request
+description: Have an idea for a new HUD element or config option?
+title: "[FEATURE] "
+labels: ["enhancement", "needs-discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature ideas are welcome. Lead with the **use case** — what information do you want to see
+        and why does it help your gameplay? That's more useful than jumping straight to "add X".
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What Information Do You Want to See?
+      description: Describe the gameplay goal. What would this show you, and why does that matter?
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's Currently Missing or Difficult?
+      description: What do you have to do right now to get this information?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: What Would You Like to See?
+      description: Rough idea of the solution — new HUD element, new config toggle, new display option.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of Request
+      options:
+        - New HUD element
+        - New config option for an existing element
+        - Visual improvement
+        - Performance improvement
+        - Loader / version support
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives You've Considered
+      description: Other mods that do something similar, or workarounds you've tried.
